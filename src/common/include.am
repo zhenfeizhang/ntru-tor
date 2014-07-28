@@ -54,6 +54,10 @@ endif
 
 LIBDONNA += $(LIBED25519_REF10)
 
+if NTOR_NTRU_ENABLED
+libcrypto_ntru_source=src/common/crypto_ntruees439ep1.c
+endif
+
 LIBOR_A_SOURCES = \
   src/common/address.c					\
   src/common/backtrace.c				\
@@ -81,7 +85,8 @@ LIBOR_CRYPTO_A_SOURCES = \
   src/common/tortls.c		\
   src/trunnel/pwbox.c		\
   src/common/crypto_curve25519.c \
-  src/common/crypto_ed25519.c
+  src/common/crypto_ed25519.c \
+  $(libcrypto_ntru_source)
 
 LIBOR_EVENT_A_SOURCES = \
 	src/common/compat_libevent.c \
@@ -114,6 +119,7 @@ COMMONHEADERS = \
   src/common/crypto.h				\
   src/common/crypto_curve25519.h		\
   src/common/crypto_ed25519.h			\
+  src/common/crypto_ntruees439ep1.h		\
   src/common/crypto_pwbox.h			\
   src/common/crypto_s2k.h			\
   src/common/di_ops.h				\

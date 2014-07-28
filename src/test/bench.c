@@ -29,6 +29,9 @@ const char tor_git_revision[] = "";
 #include "crypto_curve25519.h"
 #include "onion_ntor.h"
 #include "crypto_ed25519.h"
+#ifdef NTOR_NTRU_ENABLED
+#include "onion_ntor_ntru.h"
+#endif
 
 #if defined(HAVE_CLOCK_GETTIME) && defined(CLOCK_PROCESS_CPUTIME_ID)
 static uint64_t nanostart;
@@ -290,6 +293,67 @@ bench_ed25519(void)
   printf("Blind a public key: %.2f usec\n",
          MICROCOUNT(start, end, iters));
 }
+
+
+#ifdef NTOR_NTRU_ENABLED
+static void
+bench_onion_ntor_ntru(void)
+{
+  const int iters = 1<<10;
+  int i;
+  curve25519_keypair_t keypair1, keypair2;
+  uint64_t start, end;
+  uint8_t os[NTOR_NTRU_ONIONSKIN_LEN];
+  uint8_t or[NTOR_NTRU_REPLY_LEN];
+  ntor_ntru_handshake_state_t *state = NULL;
+  uint8_t nodeid[DIGEST_LEN];
+  di_digest256_map_t *keymap = NULL;
+
+  curve25519_secret_key_generate(&keypair1.seckey, 0);
+  curve25519_public_key_generate(&keypair1.pubkey, &keypair1.seckey);
+  curve25519_secret_key_generate(&keypair2.seckey, 0);
+  curve25519_public_key_generate(&keypair2.pubkey, &keypair2.seckey);
+  dimap_add_entry(&keymap, keypair1.pubkey.public_key, &keypair1);
+  dimap_add_entry(&keymap, keypair2.pubkey.public_key, &keypair2);
+
+  reset_perftime();
+  start = perftime();
+  for (i = 0; i < iters; ++i) {
+    onion_skin_ntor_ntru_create(nodeid, &keypair1.pubkey, &state, os);
+    ntor_ntru_handshake_state_free(state);
+    state = NULL;
+  }
+  end = perftime();
+  printf("Client-side, part 1: %f usec.\n", NANOCOUNT(start, end, iters)/1e3);
+
+  state = NULL;
+  onion_skin_ntor_ntru_create(nodeid, &keypair1.pubkey, &state, os);
+  start = perftime();
+  for (i = 0; i < iters; ++i) {
+    uint8_t key_out[CPATH_KEY_MATERIAL_LEN];
+    onion_skin_ntor_ntru_server_handshake(os, keymap, NULL, nodeid, or,
+                                          key_out, sizeof(key_out));
+  }
+  end = perftime();
+  printf("Server-side: %f usec\n",
+         NANOCOUNT(start, end, iters)/1e3);
+
+  start = perftime();
+  for (i = 0; i < iters; ++i) {
+    uint8_t key_out[CPATH_KEY_MATERIAL_LEN];
+    int s;
+    s = onion_skin_ntor_ntru_client_handshake(state, or, key_out, sizeof(key_out));
+    tor_assert(s == 0);
+  }
+  end = perftime();
+  printf("Client-side, part 2: %f usec.\n",
+         NANOCOUNT(start, end, iters)/1e3);
+
+  ntor_ntru_handshake_state_free(state);
+  dimap_free(keymap, NULL);
+}
+#endif
+
 
 static void
 bench_cell_aes(void)
@@ -571,6 +635,10 @@ static struct benchmark_t benchmarks[] = {
   ENT(onion_TAP),
   ENT(onion_ntor),
   ENT(ed25519),
+
+#ifdef NTOR_NTRU_ENABLED
+  ENT(onion_ntor_ntru),
+#endif
 
   ENT(cell_aes),
   ENT(cell_ops),

@@ -69,7 +69,7 @@ src_test_test_LDADD = src/or/libtor-testing.a src/common/libor-testing.a \
 	src/common/libor-event-testing.a src/trunnel/libor-trunnel-testing.a \
 	@TOR_ZLIB_LIBS@ @TOR_LIB_MATH@ @TOR_LIBEVENT_LIBS@ \
 	@TOR_OPENSSL_LIBS@ @TOR_LIB_WS32@ @TOR_LIB_GDI@ @CURVE25519_LIBS@ \
-	@TOR_SYSTEMD_LIBS@
+	@TOR_SYSTEMD_LIBS@ @NTRUENCRYPT_LIBS@
 
 src_test_bench_LDFLAGS = @TOR_LDFLAGS_zlib@ @TOR_LDFLAGS_openssl@ \
         @TOR_LDFLAGS_libevent@
@@ -78,7 +78,7 @@ src_test_bench_LDADD = src/or/libtor.a src/common/libor.a \
 	src/common/libor-event.a \
 	@TOR_ZLIB_LIBS@ @TOR_LIB_MATH@ @TOR_LIBEVENT_LIBS@ \
 	@TOR_OPENSSL_LIBS@ @TOR_LIB_WS32@ @TOR_LIB_GDI@ @CURVE25519_LIBS@ \
-	@TOR_SYSTEMD_LIBS@
+	@TOR_SYSTEMD_LIBS@ @NTRUENCRYPT_LIBS@
 
 noinst_HEADERS+= \
 	src/test/fakechans.h \
@@ -98,6 +98,22 @@ src_test_test_ntor_cl_LDADD = src/or/libtor.a src/common/libor.a \
 src_test_test_ntor_cl_AM_CPPFLAGS =	       \
 	-I"$(top_srcdir)/src/or"
 NTOR_TEST_DEPS=src/test/test-ntor-cl
+
+if NTOR_NTRU_ENABLED
+noinst_PROGRAMS+= src/test/test-ntor-ntru-cl
+src_test_test_ntor_ntru_cl_SOURCES  = src/test/test_ntor_ntru_cl.c
+src_test_test_ntor_ntru_cl_LDFLAGS = @TOR_LDFLAGS_zlib@ @TOR_LDFLAGS_openssl@
+src_test_test_ntor_ntru_cl_LDADD = src/or/libtor.a src/common/libor.a \
+	src/common/libor-crypto.a $(LIBDONNA) \
+	@TOR_ZLIB_LIBS@ @TOR_LIB_MATH@ \
+	@TOR_OPENSSL_LIBS@ @TOR_LIB_WS32@ @TOR_LIB_GDI@ @CURVE25519_LIBS@ \
+	@NTRUENCRYPT_LIBS@
+src_test_test_ntor_ntru_cl_AM_CPPFLAGS =	       \
+	-I"$(top_srcdir)/src/or"
+NTOR_NTRU_TEST_DEPS=src/test/test-ntor-ntru-cl
+else
+NTOR_NTRU_TEST_DEPS=
+endif
 
 if COVERAGE_ENABLED
 CMDLINE_TEST_TOR = ./src/or/tor-cov

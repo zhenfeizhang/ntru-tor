@@ -41,6 +41,8 @@ AC_ARG_ENABLE(static-zlib,
    AS_HELP_STRING(--enable-static-zlib, Link against a static zlib library. Requires --with-zlib-dir))
 AC_ARG_ENABLE(static-tor,
    AS_HELP_STRING(--enable-static-tor, Create an entirely static Tor binary. Requires --with-openssl-dir and --with-libevent-dir and --with-zlib-dir))
+AC_ARG_ENABLE(ntor-ntru,
+   AS_HELP_STRING(--enable-ntor-ntru, Build Tor with support for a quantum-safe key exchange), [], [enable_ntor_ntru=no])
 AC_ARG_ENABLE(unittests,
    AS_HELP_STRING(--disable-unittests, [Don't build unit tests for Tor. Risky!]))
 AC_ARG_ENABLE(coverage,
@@ -913,6 +915,38 @@ fi
 AM_CONDITIONAL(BUILD_CURVE25519_DONNA, test x$build_curve25519_donna = xyes)
 AM_CONDITIONAL(BUILD_CURVE25519_DONNA_C64, test x$build_curve25519_donna_c64 = xyes)
 AC_SUBST(CURVE25519_LIBS)
+
+
+dnl ============================================================
+dnl If we have curve25519 and --enable-ntor-ntru
+dnl then check for libNTRUEncrypt.
+
+have_ntruees439ep1=no
+if test x$enable_ntor_ntru != xno -a x$have_a_curve25519 != xno; then
+  AC_CHECK_HEADERS([ntruencrypt/ntru_crypto.h])
+  tor_saved_LIBS="$LIBS"
+  LIBS="$LIBS -lNTRUEncrypt"
+  AC_LINK_IFELSE([AC_LANG_PROGRAM([
+                  #include <ntruencrypt/ntru_crypto.h>
+                  ],
+                  [ void *a; int *b, *c, *d, *e;
+                    ntru_crypto_ntru_encrypt_keygen(a, NTRU_EES439EP1, b, c, d, e);
+                  ])],
+                 [have_ntruees439ep1=yes],
+                 [])
+  LIBS=$tor_saved_LIBS
+
+  if test x$have_ntruees439ep1 = xyes; then
+    AC_DEFINE(NTOR_NTRU_ENABLED, 1,
+              [Defined if we have an NTRU implementation])
+    NTRUENCRYPT_LIBS=-lNTRUEncrypt
+  fi
+
+  AC_SUBST(NTRUENCRYPT_LIBS)
+fi
+AM_CONDITIONAL(NTOR_NTRU_ENABLED, test x$have_ntruees439ep1 = xyes)
+
+
 
 dnl Make sure to enable support for large off_t if available.
 AC_SYS_LARGEFILE

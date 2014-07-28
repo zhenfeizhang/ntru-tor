@@ -23,6 +23,11 @@ else
 evdns_source=src/ext/eventdns.c
 endif
 
+if NTOR_NTRU_ENABLED
+onion_ntor_ntru_source=src/or/onion_ntor_ntru.c
+else
+onion_ntor_source=
+endif
 LIBTOR_A_SOURCES = \
 	src/or/addressmap.c				\
 	src/or/buffers.c				\
@@ -80,6 +85,7 @@ LIBTOR_A_SOURCES = \
 	src/or/onion_ntor.c				\
 	$(evdns_source)					\
 	$(tor_platform_source)				\
+	$(onion_ntor_ntru_source)			\
 	src/or/config_codedigest.c
 
 src_or_libtor_a_SOURCES = $(LIBTOR_A_SOURCES)
@@ -111,7 +117,7 @@ src_or_tor_LDADD = src/or/libtor.a src/common/libor.a \
 	src/common/libor-crypto.a $(LIBDONNA) \
 	src/common/libor-event.a \
 	@TOR_ZLIB_LIBS@ @TOR_LIB_MATH@ @TOR_LIBEVENT_LIBS@ @TOR_OPENSSL_LIBS@ \
-	@TOR_LIB_WS32@ @TOR_LIB_GDI@ @CURVE25519_LIBS@ @TOR_SYSTEMD_LIBS@
+	@TOR_LIB_WS32@ @TOR_LIB_GDI@ @CURVE25519_LIBS@ @TOR_SYSTEMD_LIBS@ @NTRUENCRYPT_LIBS@
 
 if COVERAGE_ENABLED
 src_or_tor_cov_SOURCES = src/or/tor_main.c
@@ -122,7 +128,8 @@ src_or_tor_cov_LDADD = src/or/libtor-testing.a src/common/libor-testing.a \
 	src/common/libor-crypto-testing.a $(LIBDONNA) \
 	src/common/libor-event-testing.a \
 	@TOR_ZLIB_LIBS@ @TOR_LIB_MATH@ @TOR_LIBEVENT_LIBS@ @TOR_OPENSSL_LIBS@ \
-	@TOR_LIB_WS32@ @TOR_LIB_GDI@ @CURVE25519_LIBS@ @TOR_SYSTEMD_LIBS@
+	@TOR_LIB_WS32@ @TOR_LIB_GDI@ @CURVE25519_LIBS@ @TOR_SYSTEMD_LIBS@ @NTRUENCRYPT_LIBS@
+
 endif
 
 ORHEADERS = \
@@ -164,6 +171,7 @@ ORHEADERS = \
 	src/or/onion.h					\
 	src/or/onion_fast.h				\
 	src/or/onion_ntor.h				\
+	src/or/onion_ntor_ntru.h			\
 	src/or/onion_tap.h				\
 	src/or/or.h					\
 	src/or/transports.h				\
