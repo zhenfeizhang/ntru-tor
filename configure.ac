@@ -923,11 +923,11 @@ dnl then check for libNTRUEncrypt.
 
 have_ntruees439ep1=no
 if test x$enable_ntor_ntru != xno -a x$have_a_curve25519 != xno; then
-  AC_CHECK_HEADERS([ntruencrypt/ntru_crypto.h])
+  AC_CHECK_HEADERS([libntruencrypt/ntru_crypto.h])
   tor_saved_LIBS="$LIBS"
-  LIBS="$LIBS -lNTRUEncrypt"
+  LIBS="$LIBS -lntruencrypt"
   AC_LINK_IFELSE([AC_LANG_PROGRAM([
-                  #include <ntruencrypt/ntru_crypto.h>
+                  #include <libntruencrypt/ntru_crypto.h>
                   ],
                   [ void *a; int *b, *c, *d, *e;
                     ntru_crypto_ntru_encrypt_keygen(a, NTRU_EES439EP1, b, c, d, e);
@@ -939,7 +939,7 @@ if test x$enable_ntor_ntru != xno -a x$have_a_curve25519 != xno; then
   if test x$have_ntruees439ep1 = xyes; then
     AC_DEFINE(NTOR_NTRU_ENABLED, 1,
               [Defined if we have an NTRU implementation])
-    NTRUENCRYPT_LIBS=-lNTRUEncrypt
+    NTRUENCRYPT_LIBS=-lntruencrypt
   fi
 
   AC_SUBST(NTRUENCRYPT_LIBS)
