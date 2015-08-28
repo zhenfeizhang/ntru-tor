@@ -26,7 +26,7 @@ ntruees439ep1_keypair_generate(ntruees439ep1_public_key_t *pk,
   uint16_t    sk_len;
   uint32_t    rc;
 
-  rc = ntru_crypto_drbg_external_instantiate((RANDOM_BYTES_FN)&randombytes, &drbg);
+  rc = ntru_crypto_external_drbg_instantiate((RANDOM_BYTES_FN)&randombytes, &drbg);
   if (rc != DRBG_OK)
   {
     return 1;
@@ -76,7 +76,7 @@ ntruees439ep1_encrypt(const ntruees439ep1_public_key_t *pk,
   uint16_t    ct_len;
   uint32_t    rc;
 
-  rc = ntru_crypto_drbg_external_instantiate((RANDOM_BYTES_FN)&randombytes, &drbg);
+  rc = ntru_crypto_external_drbg_instantiate((RANDOM_BYTES_FN)&randombytes, &drbg);
   if (rc != DRBG_OK)
   {
     return 1;
