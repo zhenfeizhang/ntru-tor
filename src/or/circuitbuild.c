@@ -788,6 +788,14 @@ circuit_pick_create_handshake(uint8_t *cell_type_out,
       circuits_can_use_ntor()) {
     *cell_type_out = CELL_CREATE2;
     *handshake_type_out = ONION_HANDSHAKE_TYPE_NTOR;
+
+    /* TODO: let the circuit to select
+        ONION_HANDSHAKE_TYPE_NTOR_NTRU_439 0x0011
+        or
+        ONION_HANDSHAKE_TYPE_NTOR_NTRU_743 0x0012
+        depending on configuration file.
+        Require Prop 249 to be implemented first.
+        */
     return;
   }
 

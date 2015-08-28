@@ -86,6 +86,10 @@
 #include <event2/util.h>
 #endif
 
+#ifdef NTOR_NTRU_ENABLED
+#include <libntruencrypt/ntru_crypto.h>
+#endif
+
 #include "crypto.h"
 #include "tortls.h"
 #include "../common/torlog.h"
@@ -97,6 +101,7 @@
 #include "replaycache.h"
 #include "crypto_curve25519.h"
 #include "tor_queue.h"
+
 
 /* These signals are defined to help handle_control_signal work.
  */
@@ -2629,7 +2634,16 @@ struct ntor_handshake_state_t;
 #define ONION_HANDSHAKE_TYPE_TAP  0x0000
 #define ONION_HANDSHAKE_TYPE_FAST 0x0001
 #define ONION_HANDSHAKE_TYPE_NTOR 0x0002
+#ifdef NTOR_NTRU_ENABLED
+#define ONION_HANDSHAKE_TYPE_NTOR_NTRU_439 0x0011
+/* If UseQSNTRUHandshake is set from torrc*/
+#define ONION_HANDSHAKE_TYPE_NTOR_NTRU_743 0x0012
+#define MAX_ONION_HANDSHAKE_TYPE 0x0020
+#else
 #define MAX_ONION_HANDSHAKE_TYPE 0x0002
+#endif
+
+
 typedef struct {
   uint16_t tag;
   union {
@@ -4246,6 +4260,11 @@ typedef struct {
   /** Autobool: should we use the ntor handshake if we can? */
   int UseNTorHandshake;
 
+#ifdef NTOR_NTRU_ENABLED
+  /** Autobool: should we use the ntruees743ep1 if we can? */
+  int UseQSNTRUHandshake;
+#endif
+
   /** Fraction: */
   double PathsNeededToBuildCircuits;
 
@@ -4268,6 +4287,7 @@ typedef struct {
    * when sending.
    */
   int SchedulerMaxFlushCells__;
+
 } or_options_t;
 
 /** Persistent state for an onion router, as saved to disk. */

@@ -400,6 +400,9 @@ static config_var_t option_vars_[] = {
   V(UseEntryGuardsAsDirGuards,   BOOL,     "1"),
   V(UseMicrodescriptors,         AUTOBOOL, "auto"),
   V(UseNTorHandshake,            AUTOBOOL, "1"),
+#ifdef NTOR_NTRU_ENABLED
+  V(UseQSNTRUHandshake,          AUTOBOOL, "0"),
+#endif
   V(User,                        STRING,   NULL),
   V(UserspaceIOCPBuffers,        BOOL,     "0"),
   OBSOLETE("V1AuthoritativeDirectory"),
@@ -449,7 +452,7 @@ static config_var_t option_vars_[] = {
   V(TestingDirAuthVoteExit, ROUTERSET, NULL),
   V(TestingDirAuthVoteGuard, ROUTERSET, NULL),
   VAR("___UsingTestNetworkDefaults", BOOL, UsingTestNetworkDefaults_, "0"),
-
+//  V(ntru_param__,         STRING, NTRU_EES439EP1),
   { NULL, CONFIG_TYPE_OBSOLETE, 0, NULL }
 };
 
