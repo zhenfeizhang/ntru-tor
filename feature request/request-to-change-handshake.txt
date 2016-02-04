@@ -1,6 +1,9 @@
-Title: Request to change key exchange protocol for handshake v1.1
+Filename: 263-ntru-for-pq-handshake.txt
+Title: Request to change key exchange protocol for handshake v1.2
 Author: John SCHANCK, William WHYTE and Zhenfei ZHANG
-Created: 9 Jan 2016
+Created: 29 Aug 2015
+Updated: 4 Feb 2016
+Status: Open
 
 1. Introduction
 
@@ -14,42 +17,39 @@ Created: 9 Jan 2016
                             and a quantum-safe key encapsulation mechanism
 
   where
-    0X0101  ntor+qsh    --  refers this modular design, no specific KEM is
-                            assigned.
-
-    0X0101  ntor+ntru   --  the quantum safe KEM is based on NTRUEncrypt, with
-                            parameter ntrueess443ep1
+    0X0101  ntor+qsh    --  refers to this modular design; no specific Key
+                            Encapsulation Mechanism (KEM) is assigned.
 
     0X0102  ntor+ntru   --  the quantum safe KEM is based on NTRUEncrypt, with
-                            parameter ntrueess743ep1
+                            parameter ntrueess443ep2
 
     0X0103  ntor+rlwe   --  the quantum safe KEM is based on ring learning with
                             error encryption scheme; parameter not specified
 
-	DEPENDENCY:
-	  Proposal 249: Allow CREATE cells with >505 bytes of handshake data
+        DEPENDENCY:
+          Proposal 249: Allow CREATE cells with >505 bytes of handshake data
 
   1.1 Motivation: Quantum-safe forward-secure key agreement
 
-    We are trying to add Quantum-safe forward-secrecy to the key agreement in 
-    tor handshake. (Classical) forward-secrecy means that if the long-term key 
-    is compromised, the communication prior to this compromise still stays 
-    secure. Similarly, Quantum-safe forward-secrecy implies if the long-term 
+    We are trying to add Quantum-safe forward-secrecy to the key agreement in
+    tor handshake. (Classical) forward-secrecy means that if the long-term key
+    is compromised, the communication prior to this compromise still stays
+    secure. Similarly, Quantum-safe forward-secrecy implies if the long-term
     key is compromised due to attackers with quantum-computing capabilities, the
     prior communication still remains secure.
-        
-    Current approaches for handling key agreement, for instance, the ntor 
-    handshake protocol, do not have this feature. ntor uses ECC, which will be 
-    broken when quantum computers become available. This allows the simple yet 
-    very effective harvest-then-decrypt attack, where an adversary with 
-    significant storage capabilities harvests Tor handshakes now and decrypt 
-    them in the future. 
-    
-    The proposed handshake protocol achieves quantum-safe forward-secrecy and 
-    stops those attacks by introducing a secondary short-term pre-master secret 
-    that is transported via a quantum-safe method. In the case where long-term
-    key is compromised via quantum algorithm, the attacker still need to recover
-    the second pre-master secret to be able to decrypt the communication.    
+
+    Current approaches for handling key agreement, for instance the ntor
+    handshake protocol, do not have this feature. ntor uses ECC, which will be
+    broken when quantum computers become available. This allows the simple yet
+    very effective harvest-then-decrypt attack, where an adversary with
+    significant storage capabilities harvests Tor handshakes now and decrypts
+    them in the future.
+
+    The proposed handshake protocol achieves quantum-safe forward-secrecy and
+    stops those attacks by introducing a secondary short-term pre-master secret
+    that is transported via a quantum-safe method. In the case where the long-term
+    key is compromised via quantum algorithm, the attacker still needs to recover
+    the second pre-master secret to be able to decrypt the communication.
 
   1.2 Motivation: Allowing plug & play for quantum-safe encryption algorithms
 
@@ -80,28 +80,28 @@ Created: 9 Jan 2016
     to be adopted in this framework. Our approach is a hybridization of ntor
     protocol and a KEM. We instantiate this framework with NTRUEncrypt, a
     lattice-based encryption scheme that is believed to be quantum resistant.
-    This framework is expandable to other quantum-safe encryptions such as Ring 
+    This framework is expandable to other quantum-safe encryptions such as Ring
     Learning with Error (R-LWE) based schemes.
 
     2.1.1 Achieved Property:
 
-      1)  The proposed key exchange method is quantum-safe forward-secure: two 
+      1)  The proposed key exchange method is quantum-safe forward-secure: two
       secrets are exchanged, one protected by ECC, one protected by NTRUEncrypt,
-      and then put through the native Tor Key Derivation Function (KDF) to 
-      derive the encryption and authentication keys. Both secrets are protected 
+      and then put through the native Tor Key Derivation Function (KDF) to
+      derive the encryption and authentication keys. Both secrets are protected
       with one-time keys for their respective public key algorithms.
 
       2)  The proposed key exchange method provides one-way authentication: The
       server is authenticated, while the client remains anonymous.
 
-      3)  The protocol is almost backward compatible with its previous
-      version: ntor. By omitting a single field, one obtains the exact ntor
-      protocol. That is, the protocol is at least as secure as ntor.
+      3)  The protocol is at least as secure as ntor. In the case where the
+      quantum-safe encryption algorithm fails, the protocol is indentical to 
+      ntor protocol.
 
     2.1.2 General idea:
 
       When a client wishes to establish a one-way authenticated key K with a
-      server, through following steps a session key is established:
+      server, a session key is established through the following steps:
       1)  Establish a common secret E (classical cryptography, i.e., ECC) using
       a one-way authenticated key exchange protocol.
       #ntor currently uses this approach#;
@@ -120,16 +120,14 @@ Created: 9 Jan 2016
       quantum-safe encryption algorithm, and use NTRUEncrypt as our example;
       **new approach**
 
-      3)  HMAC-based Extract-and-Expand Key Derivation Function - KDF-RFC5869;
-      ##existing approach: See 5.2.2 tor-spec.txt## 
-      Note: a new hash function, SHA3 as in FIPS 202, will be used, rather than
-      SHA256 as in ntor.
+      3)  SHA3-256 hash function (see FIPS 202), and SHAKE256 KDF;
+      ##previous approach: HMAC-based Extract-and-Expand KDF-RFC5869##
 
   2.2 The protocol
 
     2.2.1 Initialization
 
-      H(x,t) as HMAC_SHA3 with message x and key t.
+      H(x,t) as SHA3-256 with message x and key t.
       H_LENGTH      = 32
       ID_LENGTH     = 20
       G_LENGTH      = 32
@@ -138,16 +136,16 @@ Created: 9 Jan 2016
 *     QSC_LENGTH    = XXX           length of QSE cipher
 
 *     PROTOID       = "ntor-curve25519-sha3-1-[qseid]"
-#pre  PORTOID       = "ntor-curve25519-sha256-1"
+#pre  PROTOID       = "ntor-curve25519-sha256-1"
 
       t_mac         = PROTOID | ":mac"
       t_key         = PROTOID | ":key_extract"
       t_verify      = PROTOID | ":verify"
 
       These three variables define three different cryptographic hash functions:
-      hash1         = HMAC(*, t_mac);
-      hash2         = HMAC(*, t_key);
-      hash3         = HMAC(*, t_verify);
+      hash1         = H(*, t_mac);
+      hash2         = H(*, t_key);
+      hash3         = H(*, t_verify);
 
       MULT(A,b)     = the multiplication of the curve25519 point 'A' by the
                       scalar 'b'.
@@ -173,7 +171,7 @@ Created: 9 Jan 2016
       The client generates a temporary key pair:
         x, X        = KEYGEN();
 
-      an QSE temporary key pair:
+      and a QSE temporary key pair:
 *       QSSK, QSPK  = QSKEYGEN();
 
 ================================================================================
@@ -187,11 +185,11 @@ Created: 9 Jan 2016
       The server generates an ephemeral curve25519 keypair:
         y, Y        = KEYGEN();
 
-      a ephemeral "parallel" secret for encryption with QSE:
+      and an ephemeral "parallel" secret for encryption with QSE:
 *       PAR_SEC     P                       [H_LENGTH    bytes]
 
       and computes:
-*       C           = ENCRYPT( P | B, QSPK);
+*       C           = ENCRYPT( P | B | Y, QSPK);
 
       Then it uses its ntor private key 'b' to compute an ECC secret
         E           = EXP(X,y) | EXP(X,b) | B | X | Y
@@ -209,11 +207,15 @@ Created: 9 Jan 2016
 
 ================================================================================
       The server's handshake reply is:
-        SERVER_PK       Y                       [G_LENGTH     bytes]
         AUTH            H(auth_input, t_mac)    [H_LENGTH     bytes]
 *       QSCIPHER        C                       [QSPK_LENGTH  bytes]
+
+      Note: in previous ntor protocol the server also needs to send
+#pre    SERVER_PK       Y                       [G_LENGTH     bytes]
+      This value is now encrypted in C, so the server does not need to send Y.
+      
 ================================================================================
-      The client then checks Y is in G^*, and computes
+      The client decrypts C, then checks Y is in G^*, and computes
 
         E               = EXP(Y,x) | EXP(B,x) | B | X | Y
 *       P'              = DECRYPT(C, QSSK)
@@ -231,23 +233,24 @@ Created: 9 Jan 2016
       The client verifies that AUTH == H(auth_input, t_mac).
 
       Both parties now have a shared value for KEY_SEED. This value will be used
-      during Key Derivation Function - KDF-RFC5869 (see 5.2.2 tor-spec.txt)
+      during Key Derivation Function.
 
   2.3 Instantiation with NTRUEncrypt
 
-    The example uses the NTRU parameter set NTRU_EESS443EP1. This has keys
+    The example uses the NTRU parameter set NTRU_EESS443EP2. This has keys
     and ciphertexts of length 610 bytes. This parameter set delivers 128 bits
-    classical security and quantum security. For 256 bits classcial and quantum 
-    security, use NTRU_EESS743EP1.
+    classical security and quantum security. This parameter set uses product
+    form NTRU polynomials. For 256 bits classical and quantum security, use 
+    NTRU_EESS743EP2.
 
     We adjust the following parameters:
 
     handshake type:
-    0X0101  ntor+ntru       the quantum safe KEM is based on NTRUEncrypt, with
-                            parameter ntrueess443ep1
-    PROTOID       = "ntor-curve25519-sha3-1-ntrueess443ep1"
-    QSPK_LENGTH   = 610     length of NTRU_EESS439EP1 public key
-    QSC_LENGTH    = 610     length of NTRU_EESS439EP1 cipher
+    0X0102  ntor+ntru       the quantum safe KEM is based on NTRUEncrypt, with
+                            parameter ntrueess443ep2
+    PROTOID       = "ntor-curve25519-sha3-1-ntrueess443ep2"
+    QSPK_LENGTH   = 610     length of NTRU_EESS443EP2 public key
+    QSC_LENGTH    = 610     length of NTRU_EESS443EP2 cipher
 
     NTRUEncrypt can be adopted in our framework without further modification.
 
@@ -266,57 +269,44 @@ Created: 9 Jan 2016
     model can be found at https://eprint.iacr.org/2015/287.
 
   3.3 Cryptographic hash function
-    The default hash function HMAC_SHA256 from Tor. This is suffice to provide
+    The default hash function HMAC_SHA256 from Tor suffices to provide
     desired security for the present day. However, to be more future proof, we
-    propose to use HMAC_SHA3 when Tor starts to migrant to SHA3.
+    propose to use SHA3 when Tor starts to migrate to SHA3.
 
   3.4 Key Encapsulation Mechanism
     The KEM in our protocol can be proved to be KEM-CCA-2 secure.
 
   3.5 Quantum-safe Forward Secrecy
-    The quantum-safe forward secrecy is achieved.
+    Quantum-safe forward secrecy is achieved.
 
   3.6 Quantum-safe authentication
-    The proposed protocol is secure only until a quantum computer is developed 
+    The proposed protocol is secure only until a quantum computer is developed
     that is capable of breaking the onion keys in real time. Such a computer can
-    compromise the authentication of ntor online; the security of this approach 
-    depends on the authentication being secure at the time the handshake is 
-    executed. This approach is intended to provide security against the 
-    harvest-then-decrypt attack while an acceptable quantum-safe approach with 
+    compromise the authentication of ntor online; the security of this approach
+    depends on the authentication being secure at the time the handshake is
+    executed. This approach is intended to provide security against the
+    harvest-then-decrypt attack while an acceptable quantum-safe approach with
     security against an active attacker is developed.
 
 4. Candidate quantum-safe encryption algorithms
 
-  We do not propose any quantum-safe encryption algorithms in this proposal. 
-  This documents focus on the hybrid design. The implementer should modularize 
-  the protocol with appropriate interfaces that allows any quantum-safe 
-  encryption algorithms to be used in this setting.
+  Two candidate quantum-safe encryption algorithms are under consideration.
   
-  Candidate quantum-safe encryption algorithms will be included in another 
-  proposal. This document will refer to the proposal when both proposals are 
-  mature. 
+  NTRUEncrypt, with parameter set ntrueess443ep2 provides 128 bits classcial and
+  quantum security. The parameter sets is available for use now. 
 
+  LWE-based key exchange, based on Peikert's idea [Pei14]. Parameter sets 
+  suitable for this framework (the newerhop vairant) is still under development. 
 
 5. Bibliography
 
-[DK05] Y. Dodis, J. Katz, "Chosen-Ciphertext Security of Mulitple Encryption",
+[DK05]  Y. Dodis, J. Katz, "Chosen-Ciphertext Security of Mulitple Encryption",
     Theory of Cryptography Conference, 2005.
     http://link.springer.com/chapter/10.1007%2F978-3-540-30576-7_11
     (conference version) or http://cs.nyu.edu/~dodis/ps/2enc.pdf (preprint)
+    
+[Pei14] C. Peikert, "Lattice Cryptography for the Internet", PQCrypto 2014.   
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+ 
 
